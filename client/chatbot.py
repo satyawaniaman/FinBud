@@ -1,20 +1,25 @@
 #pip install google-genai
 
-import streamlit as st, os, time
+import streamlit as st, os
 import google.generativeai as genai
-from google.generativeai import types
-from pypdf import PdfReader, PdfWriter, PdfMerger
-
+import json
 
 def setup_page():
     st.set_page_config(
-        page_title="	⚡ Voice Chatbot",
+        page_title="⚡ Stock Trading Assistant",
         layout="centered"
     )
     
-    st.header("FINANCIAL ADVISOR CHATBOT!!!" )
-
-    st.sidebar.header("Options", divider='rainbow')
+    # Create a header with a reset button
+    col1, col2 = st.columns([4, 1])
+    with col1:
+        st.header("STOCK TRADING PLATFORM ASSISTANT")
+    with col2:
+        if st.button("New Chat", type="primary"):
+            # Clear session state and force rerun
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
     
     hide_menu_style = """
             <style>
@@ -23,264 +28,158 @@ def setup_page():
             """
     st.markdown(hide_menu_style, unsafe_allow_html=True)
 
+def get_stock_platform_context():
+    """Provides context about the stock trading platform features for the chatbot."""
+    return """
+    You are a financial advisor chatbot specialized in the Stock Trading Platform. Use this context to help users:
     
-def get_choice():
-    choice = st.sidebar.radio("Choose:", ["Converse with Gemini 2.0",
-                                          "Chat with a PDF",
-                                          "Chat with many PDFs",
-                                          "Chat with an image",
-                                          "Chat with audio",
-                                          "Chat with video"],)
-    return choice
+    STOCK CHART FEATURES:
+    - Real-time stock data for open markets displayed as candlestick charts
+    - Historical data available for closed markets (7, 10, 20, or 30 days)
+    - OHLC data (Open, High, Low, Close) for each candlestick
+    - Price and percentage change calculations from previous close
+    - Color-coded indicators (Green for price up, Red for price down)
+    - Market status indicator (Open/Closed)
+    - Live time display
+    
+    DATA POINTS AVAILABLE:
+    - Latest stock value
+    - Previous close value
+    - Price change (with + or - sign)
+    - Percentage change (with + or - sign)
+    - Historical trends visible in charts
+    
+    USER INTERACTIONS:
+    - Users can select different time ranges for historical data
+    - Hovering over candlesticks shows specific OHLC data for that time point
+    - Real-time updates through websocket connections when market is open
+    
+    TECHNICAL IMPLEMENTATION:
+    - Built with Next.js and TypeScript
+    - Uses lightweight-charts library for candlestick charts
+    - Real-time data via socket.io connections
+    - Redux for state management
+    - Material UI components for responsive design
+    - Dynamic routing based on market and symbol parameters
+      URL structure: /chart/[market]/[symbol]
+      Example: /chart/NSE/RELIANCE for Reliance Industries on National Stock Exchange
+    
+    When answering questions about stocks and trading, incorporate this knowledge about the platform's capabilities.
+    """
 
- 
-def get_clear():
-    clear_button=st.sidebar.button("Start new session", key="clear")
-    return clear_button
-
-     
+def get_current_stock_context():
+    """Gets context about the current stock being viewed based on URL parameters."""
+    # In a production app, this would detect the actual URL parameters
+    # For demo purposes, let's add a stock selector
+    st.subheader("Stock Context")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        markets = ["NSE", "BSE", "NYSE", "NASDAQ"]
+        market = st.selectbox("Select Market", markets)
+    
+    with col2:
+        symbols = {
+            "NSE": ["RELIANCE", "TCS", "INFY", "HDFCBANK", "BAJFINANCE"],
+            "BSE": ["RELIANCE", "TCS", "INFY", "HDFCBANK", "BAJFINANCE"],
+            "NYSE": ["AAPL", "MSFT", "GOOGL", "AMZN", "META"],
+            "NASDAQ": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
+        }
+        symbol = st.selectbox("Select Symbol", symbols[market])
+    
+    # Store the current stock context in session state
+    if 'current_stock' not in st.session_state or st.session_state.current_stock != f"{market}:{symbol}":
+        st.session_state.current_stock = f"{market}:{symbol}"
+        if 'messages' in st.session_state:
+            # Add a system message about the stock change
+            st.session_state.messages.append({
+                "role": "system", 
+                "content": f"The user is now viewing stock chart for {symbol} on {market}.",
+                "visible": False  # Flag to not display system messages to the user
+            })
+    
+    return {
+        "market": market,
+        "symbol": symbol,
+        "url": f"/chart/{market}/{symbol}"
+    }
+       
 def main():
-    choice = get_choice()
+    # Get current stock context (simulates Next.js dynamic routing)
+    current_stock = get_current_stock_context()
     
-    if choice == "Converse with Gemini 2.0":
-        st.subheader("Your finance buddy !!!")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
+    # Initialize messages in session state
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
+        # Add initial system message about the current stock
+        st.session_state.messages.append({
+            "role": "system", 
+            "content": f"The user is viewing stock chart for {current_stock['symbol']} on {current_stock['market']}.",
+            "visible": False
+        })
     
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
+    # Display chat messages (excluding system messages)
+    for message in st.session_state.messages:
+        if message.get("visible", True):  # Only show messages marked as visible
+            with st.chat_message(message["role"], avatar="👤" if message["role"] == "user" else "📈"):
+                st.markdown(message["content"])
+    
+    # Get user input
+    prompt = st.chat_input(f"Ask about {current_stock['symbol']} on {current_stock['market']}")
+    
+    if prompt:
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
         
-        if clear not in st.session_state:
-            chat = model.start_chat(history=[])
-            prompt = st.chat_input("Enter your question here")
-            if prompt:
-                with st.chat_message("user"):
-                    st.write(prompt)
+        # Display user message
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(prompt)
         
-                st.session_state.message += prompt
-                with st.chat_message(
-                    "model", avatar="🧞‍♀️",
-                ):
-                    response = chat.send_message(st.session_state.message)
-                    st.markdown(response.text) 
-                    st.sidebar.markdown(response.usage_metadata)
-                st.session_state.message += response.text
+        # Get AI response
+        with st.chat_message("assistant", avatar="📈"):
+            with st.spinner("Thinking..."):
+                # Create chat instance and add system message with context
+                chat = model.start_chat(history=[])
+                
+                # Add the platform context
+                platform_context = get_stock_platform_context()
+                chat.send_message(f"SYSTEM: {platform_context}")
+                
+                # Add current stock context
+                stock_context = f"""
+                CURRENT STOCK CONTEXT:
+                The user is currently viewing the chart for {current_stock['symbol']} on {current_stock['market']} exchange.
+                The URL path is {current_stock['url']}.
+                When the user asks questions, assume they're referring to this stock unless they specifically mention another stock.
+                """
+                chat.send_message(f"SYSTEM: {stock_context}")
+                
+                # Construct conversation history for the model
+                conversation = []
+                for msg in st.session_state.messages:
+                    if msg["role"] == "system":
+                        # Add system messages directly
+                        conversation.append(f"SYSTEM: {msg['content']}")
+                    elif msg["role"] == "user":
+                        # Add user messages
+                        conversation.append(f"USER: {msg['content']}")
+                    elif msg["role"] == "assistant":
+                        # Add assistant messages
+                        conversation.append(f"ASSISTANT: {msg['content']}")
+                
+                # Join conversation and get response
+                full_prompt = "\n".join(conversation)
+                response = chat.send_message(full_prompt)
+                
+                # Display response
+                st.markdown(response.text)
+        
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
 
-    elif choice == "Chat with a PDF":
-        st.subheader("Chat with your PDF file")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
-    
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
-        
-        if clear not in st.session_state:
-            uploaded_files = st.file_uploader("Choose your pdf file", type=['pdf'], accept_multiple_files=False)
-            if uploaded_files:
-                file_name=uploaded_files.name
-                file_upload = model.upload_file(file=file_name)
-                chat2 = model.start_chat(history=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_uri(
-                                file_uri=file_upload.uri,
-                                mime_type=file_upload.mime_type),
-                        ]
-                    ),
-                ])
-                prompt2 = st.chat_input("Enter your question here")
-                if prompt2:
-                    with st.chat_message("user"):
-                        st.write(prompt2)
-            
-                    st.session_state.message += prompt2
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response2 = chat2.send_message(st.session_state.message)
-                        st.markdown(response2.text)
-                        st.sidebar.markdown(response2.usage_metadata)
-                    st.session_state.message += response2.text
-                    
-    elif choice == "Chat with many PDFs":
-        st.subheader("Chat with your PDF file")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
-    
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
-        
-        if clear not in st.session_state:
-        
-            uploaded_files2 = st.file_uploader("Choose 1 or more files",  type=['pdf'], accept_multiple_files=True)
-               
-            if uploaded_files2:
-                merger = PdfMerger()
-                for file in uploaded_files2:
-                        merger.append(file)
-    
-                fullfile = "merged_all_files.pdf"
-                merger.write(fullfile)
-                merger.close()
-
-                file_upload = model.upload_file(file=fullfile) 
-                chat2b = model.start_chat(history=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_uri(
-                                file_uri=file_upload.uri,
-                                mime_type=file_upload.mime_type),
-                        ]
-                    ),
-                ])
-                prompt2b = st.chat_input("Enter your question here")
-                if prompt2b:
-                    with st.chat_message("user"):
-                        st.write(prompt2b)
-            
-                    st.session_state.message += prompt2b
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response2b = chat2b.send_message(st.session_state.message)
-                        st.markdown(response2b.text)
-                        st.sidebar.markdown(response2b.usage_metadata)
-                    st.session_state.message += response2b.text
-            
-    elif choice == "Chat with an image":
-        st.subheader("Chat with your PDF file")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
-    
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
-        
-        if clear not in st.session_state:
-            uploaded_files2 = st.file_uploader("Choose your PNG or JPEG file",  type=['png','jpg'], accept_multiple_files=False)
-            if uploaded_files2:
-                file_name2=uploaded_files2.name
-                file_upload = model.upload_file(file=file_name2)
-                chat3 = model.start_chat(history=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_uri(
-                                file_uri=file_upload.uri,
-                                mime_type=file_upload.mime_type),
-                        ]
-                    ),
-                ])
-                prompt3 = st.chat_input("Enter your question here")
-                if prompt3:
-                    with st.chat_message("user"):
-                        st.write(prompt3)
-            
-                    st.session_state.message += prompt3
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response3 = chat3.send_message(st.session_state.message)
-                        st.markdown(response3.text)
-                    st.session_state.message += response3.text
-                
-    elif choice == "Chat with audio":
-        st.subheader("Chat with your audio file")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
-    
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
-        
-        if clear not in st.session_state:
-            uploaded_files3 = st.file_uploader("Choose your mp3 or wav file",  type=['mp3','wav'], accept_multiple_files=False)
-            if uploaded_files3:
-                file_name3=uploaded_files3.name
-                file_upload = model.upload_file(file=file_name3)
-                chat4 = model.start_chat(history=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_uri(
-                                file_uri=file_upload.uri,
-                                mime_type=file_upload.mime_type),
-                        ]
-                    ),
-                ])
-                prompt5 = st.chat_input("Enter your question here")
-                if prompt5:
-                    with st.chat_message("user"):
-                        st.write(prompt5)
-            
-                    st.session_state.message += prompt5
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response4 = chat4.send_message(st.session_state.message)
-                        st.markdown(response4.text)
-                    st.session_state.message += response4.text
-
-    elif choice == "Chat with video":
-        st.subheader("Chat with your video file")
-        clear = get_clear()
-        if clear:
-            if 'message' in st.session_state:
-                del st.session_state['message']
-    
-        if 'message' not in st.session_state:
-            st.session_state.message = " "
-        
-        if clear not in st.session_state:
-            uploaded_files4 = st.file_uploader("Choose your mp4 or mov file",  type=['mp4','mov'], accept_multiple_files=False)
-            
-            if uploaded_files4:
-                file_name4=uploaded_files4.name
-                video_file = model.upload_file(file=file_name4)
-                while video_file.state == "PROCESSING":
-                    time.sleep(10)
-                    video_file = model.get_file(name=video_file.name)
-                
-                if video_file.state == "FAILED":
-                  raise ValueError(video_file.state)
-                
-                chat5 = model.start_chat(history=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_uri(
-                                file_uri=video_file.uri,
-                                mime_type=video_file.mime_type),
-                        ]
-                    ),
-                ])
-                prompt4 = st.chat_input("Enter your question here")
-                if prompt4:
-                    with st.chat_message("user"):
-                        st.write(prompt4)
-            
-                    st.session_state.message += prompt4
-                    with st.chat_message(
-                        "model", avatar="🧞‍♀️",
-                    ):
-                        response5 = chat5.send_message(st.session_state.message)
-                        st.markdown(response5.text)
-                    st.session_state.message += response5.text
-                    
-                
 if __name__ == '__main__':
     setup_page()
-    genai.configure(api_key=os.environ.get('GOOGLE_API_KEY_NEW', 'AIzaSyB7--IrFMO0pnyYmFls4z5c6gKHRDRwdm8'))
+    genai.configure(api_key=os.environ.get('GOOGLE_API_KEY', 'AIzaSyB7--IrFMO0pnyYmFls4z5c6gKHRDRwdm8'))
     MODEL_ID = "gemini-1.5-flash"
     model = genai.GenerativeModel(MODEL_ID)
     main()

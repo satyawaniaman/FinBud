@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+"use client";
+import React, { useState } from "react";
 
 const ChatbotWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Responsive width/height
-  const width = typeof window !== "undefined" && window.innerWidth < 500 ? "95vw" : 400;
-  const height = typeof window !== "undefined" && window.innerWidth < 700 ? "60vh" : 600;
+  const width =
+    typeof window !== "undefined" && window.innerWidth < 500 ? "95vw" : 400;
+  const height =
+    typeof window !== "undefined" && window.innerWidth < 700 ? "60vh" : 600;
 
   return (
     <>
@@ -14,24 +17,26 @@ const ChatbotWidget: React.FC = () => {
       {!open && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             bottom: 24,
             right: 24,
             zIndex: 1000,
-            cursor: 'pointer',
-            background: '#fff',
-            borderRadius: '50%',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            cursor: "pointer",
+            background: "#fff",
+            borderRadius: "50%",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             width: 56,
             height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onClick={() => setOpen(true)}
           title="Open Chatbot"
         >
-          <span role="img" aria-label="chat" style={{ fontSize: 32 }}>💬</span>
+          <span role="img" aria-label="chat" style={{ fontSize: 32 }}>
+            💬
+          </span>
         </div>
       )}
 
@@ -39,47 +44,60 @@ const ChatbotWidget: React.FC = () => {
       {open && (
         <div
           style={{
-            position: 'fixed',
+            position: "fixed",
             bottom: 90,
             right: 24,
             width,
             height,
             zIndex: 1001,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+            boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
             borderRadius: 12,
-            overflow: 'hidden',
-            background: '#fff',
-            display: 'flex',
-            flexDirection: 'column',
+            overflow: "hidden",
+            background: "#fff",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Close Button */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            background: '#f5f5f5',
-            padding: '4px 8px',
-            borderBottom: '1px solid #eee',
-          }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              background: "#f5f5f5",
+              padding: "4px 8px",
+              borderBottom: "1px solid #eee",
+            }}
+          >
             <button
               onClick={() => setOpen(false)}
               style={{
-                background: 'none',
-                border: 'none',
+                background: "none",
+                border: "none",
                 fontSize: 20,
-                cursor: 'pointer',
+                cursor: "pointer",
               }}
               aria-label="Close Chatbot"
-            >✖️</button>
+            >
+              ✖️
+            </button>
           </div>
           {/* Iframe */}
-          <div style={{ flex: 1, position: 'relative' }}>
+          <div style={{ flex: 1, position: "relative" }}>
             {loading && (
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(255,255,255,0.7)', zIndex: 2
-              }}>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255,255,255,0.7)",
+                  zIndex: 2,
+                }}
+              >
                 <span>Loading...</span>
               </div>
             )}
@@ -87,7 +105,7 @@ const ChatbotWidget: React.FC = () => {
               src="http://localhost:8501"
               width="100%"
               height="100%"
-              style={{ border: 'none' }}
+              style={{ border: "none" }}
               title="Financial Advisor Chatbot"
               onLoad={() => setLoading(false)}
             />
