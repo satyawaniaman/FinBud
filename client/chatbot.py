@@ -176,7 +176,7 @@ def main():
         
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response.text})
-
+                
 if __name__ == '__main__':
     setup_page()
     genai.configure(api_key=os.environ.get('GOOGLE_API_KEY', 'AIzaSyB7--IrFMO0pnyYmFls4z5c6gKHRDRwdm8'))
