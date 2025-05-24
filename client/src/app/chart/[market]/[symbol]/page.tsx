@@ -15,10 +15,12 @@ import {
   IconButton,
   Tooltip,
   Paper,
+  Button,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import InsightsIcon from "@mui/icons-material/Insights";
 import ShowChartIcon from "@mui/icons-material/ShowChart";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 //* ************** Custom imports *************** *//
 import LiveTime from "@/app/components/LiveTime";
@@ -368,6 +370,34 @@ const StockData: FC = () => {
     router.push(`/insights/${params.market}/${params.symbol}`);
   };
 
+  // Navigate to Upstox chart page for the specific stock
+  const navigateToBuy = () => {
+    // Get the symbol as string (handle potential array from params)
+    const symbolStr = Array.isArray(params.symbol)
+      ? params.symbol[0]
+      : params.symbol;
+
+    // Format the symbol appropriately
+    const formattedSymbol = symbolStr.toUpperCase();
+
+    // Stock token mapping for Upstox Pro
+    const stockTokens: Record<string, string> = {
+      HDFC: "4963",
+      RELIANCE: "2885",
+      TCS: "11536",
+      INFY: "1594",
+      WIPRO: "3787",
+    };
+
+    // Get the token for the current stock
+    const token = stockTokens[formattedSymbol] || "0";
+
+    // Create the Upstox URL with the current stock symbol - just charts without buy action
+    const upstoxUrl = `https://pro.upstox.com/charts/${token}`;
+
+    window.open(upstoxUrl, "_blank");
+  };
+
   return (
     <Grid container sx={{ mt: 8 }} spacing={2}>
       <Grid item xs={12} md={8}>
@@ -668,6 +698,80 @@ const StockData: FC = () => {
                   {percentageChangeValue > 0 ? "+" : ""}
                   {percentageChangeValue.toFixed(2)}%
                 </span>
+              </Typography>
+            </Box>
+
+            {/* Buy Now Section */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(21, 25, 36, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.10)",
+                backdropFilter: "blur(5px)",
+                borderRadius: "1rem",
+                p: 3.5,
+                mb: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "white",
+                  mb: 3,
+                  textAlign: "center",
+                  fontWeight: 600,
+                }}
+              >
+                Ready to Invest?
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#b2b5be",
+                  mb: 3,
+                  textAlign: "center",
+                  lineHeight: 1.6,
+                }}
+              >
+                Buy {params.symbol} shares at the current market price of ₹
+                {Number(latestOhlc.close).toFixed(2)}
+              </Typography>
+
+              <Button
+                variant="contained"
+                startIcon={<ShowChartIcon />}
+                onClick={navigateToBuy}
+                sx={{
+                  backgroundColor: GREEN,
+                  color: "white",
+                  borderRadius: "2rem",
+                  padding: "0.8rem 2rem",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "1rem",
+                  "&:hover": {
+                    backgroundColor: "#43a047",
+                    boxShadow: "0 4px 20px rgba(76, 175, 80, 0.4)",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              >
+                View on Upstox
+              </Button>
+
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "#b2b5be",
+                  mt: 2,
+                  textAlign: "center",
+                  fontSize: "0.7rem",
+                }}
+              >
+                You will be redirected to Upstox trading platform
               </Typography>
             </Box>
           </Grid>
