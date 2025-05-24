@@ -1,25 +1,35 @@
-'use client';
-import { useState, useEffect, useRef, FC } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+"use client";
+import { useState, useEffect, useRef, FC } from "react";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import {
   createChart,
   ColorType,
   IChartApi,
   ISeriesApi,
-} from 'lightweight-charts';
-import { Box, Typography, Grid } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+} from "lightweight-charts";
+import {
+  Box,
+  Typography,
+  Grid,
+  Chip,
+  IconButton,
+  Tooltip,
+  Paper,
+} from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import InsightsIcon from "@mui/icons-material/Insights";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 
 //* ************** Custom imports *************** *//
-import LiveTime from '@/app/components/LiveTime';
-import { socket } from '@/app/middleware/socket';
-import { ReduxDispatch, ReduxState } from '@/lib/redux/store';
-import { setMarketStatus, setDataType } from '@/lib/redux/slices/stockSlice';
-import SelectStockDay from './SelectStockDay';
+import LiveTime from "@/app/components/LiveTime";
+import { socket } from "@/app/middleware/socket";
+import { ReduxDispatch, ReduxState } from "@/lib/redux/store";
+import { setMarketStatus, setDataType } from "@/lib/redux/slices/stockSlice";
+import SelectStockDay from "./SelectStockDay";
 import {
   useGetStockDataQuery,
   useLazyGetOnSelecteStockDataQuery,
-} from '@/lib/redux/api/stockApi';
+} from "@/lib/redux/api/stockApi";
 import {
   RED,
   GREEN,
@@ -29,12 +39,12 @@ import {
   determineColor,
   transformDataToSeries,
   transformSingleDataToPoint,
-} from './ChartPage';
+} from "./ChartPage";
 
 //* ************************ ************************ *//
 const StockData: FC = () => {
   const [chart, setChart] = useState<IChartApi | null>(null);
-  const [series, setSeries] = useState<ISeriesApi<'Candlestick'> | null>(null);
+  const [series, setSeries] = useState<ISeriesApi<"Candlestick"> | null>(null);
   const [color, setColor] = useState<string>(DEFAULT_COLOR);
   const [latestOhlc, setLatestOhlc] = useState(ohlcObj);
   const [ohlc, setOhlc] = useState(ohlcObj);
@@ -47,6 +57,7 @@ const StockData: FC = () => {
   const chartContainerRef = useRef(null);
   const params = useParams();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Search stock by url params (rtk api)
   const { data, refetch } = useGetStockDataQuery(params);
@@ -107,78 +118,67 @@ const StockData: FC = () => {
   const createNewChart = () => {
     if (!chartContainerRef.current) return;
 
-    if (!chart) {
-      const newChart = createChart(chartContainerRef.current, {
-        layout: {
-          background: { type: ColorType.Solid, color: '#151924' },
-          textColor: DEFAULT_COLOR,
-        },
-        grid: {
-          vertLines: { color: '#232632' },
-          horzLines: { color: '#232632' },
-        },
-        localization: {
-          priceFormatter: (price: number) => `₹${price.toFixed(2)}`,
-          timeFormatter: (time: number) => {
-            const dateObj = new Date(time * 1000);
-            return `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj
-              .getMinutes()
-              .toString()
-              .padStart(2, '0')}`;
-          },
-        },
-      });
-
-      newChart.timeScale().applyOptions({
-        timeVisible: true,
-        secondsVisible: false,
-        barSpacing: 10,
-        tickMarkFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          const monthName = monthNames[date.getMonth()];
-
-          if (dataType === 'historical' || isDayHighlighted) {
-            return `${date.getDate().toString().padStart(2, '0')} ${monthName}`;
-          } else {
-            return `${date.getHours().toString().padStart(2, '0')}:${date
-              .getMinutes()
-              .toString()
-              .padStart(2, '0')}`;
-          }
-        },
-      });
-
-      const newSeries = newChart.addCandlestickSeries({
-        upColor: GREEN,
-        downColor: RED,
-        borderDownColor: RED,
-        borderUpColor: GREEN,
-        wickDownColor: RED,
-        wickUpColor: GREEN,
-      });
-
-      setChart(newChart);
-      setSeries(newSeries);
-    } else {
-      chart.timeScale().applyOptions({
-        timeVisible: true,
-        secondsVisible: false,
-        barSpacing: 10,
-        tickMarkFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          const monthName = monthNames[date.getMonth()];
-
-          if (dataType === 'historical' || isDayHighlighted) {
-            return `${date.getDate().toString().padStart(2, '0')} ${monthName}`;
-          } else {
-            return `${date.getHours().toString().padStart(2, '0')}:${date
-              .getMinutes()
-              .toString()
-              .padStart(2, '0')}`;
-          }
-        },
-      });
+    // If chart already exists, destroy it first to prevent duplicate charts
+    if (chart) {
+      chart.remove();
+      setChart(null);
+      setSeries(null);
     }
+
+    const container = chartContainerRef.current as HTMLDivElement;
+    const newChart = createChart(container, {
+      layout: {
+        background: { type: ColorType.Solid, color: "#151924" },
+        textColor: DEFAULT_COLOR,
+      },
+      grid: {
+        vertLines: { color: "#232632" },
+        horzLines: { color: "#232632" },
+      },
+      width: container.clientWidth,
+      height: container.clientHeight,
+      localization: {
+        priceFormatter: (price: number) => `₹${price.toFixed(2)}`,
+        timeFormatter: (time: number) => {
+          const dateObj = new Date(time * 1000);
+          return `${dateObj.getHours().toString().padStart(2, "0")}:${dateObj
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
+        },
+      },
+    });
+
+    newChart.timeScale().applyOptions({
+      timeVisible: true,
+      secondsVisible: false,
+      barSpacing: 10,
+      tickMarkFormatter: (time: number) => {
+        const date = new Date(time * 1000);
+        const monthName = monthNames[date.getMonth()];
+
+        if (dataType === "historical" || isDayHighlighted) {
+          return `${date.getDate().toString().padStart(2, "0")} ${monthName}`;
+        } else {
+          return `${date.getHours().toString().padStart(2, "0")}:${date
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`;
+        }
+      },
+    });
+
+    const newSeries = newChart.addCandlestickSeries({
+      upColor: GREEN,
+      downColor: RED,
+      borderDownColor: RED,
+      borderUpColor: GREEN,
+      wickDownColor: RED,
+      wickUpColor: GREEN,
+    });
+
+    setChart(newChart);
+    setSeries(newSeries);
   };
 
   useEffect(() => {
@@ -193,7 +193,12 @@ const StockData: FC = () => {
       }
     }
 
-    if (series) {
+    // Initialize chart if it doesn't exist yet
+    if (chartContainerRef.current && !chart) {
+      createNewChart();
+    }
+
+    if (series && (data || historicalData)) {
       // If historical data is selected to show, show selected days data
       if (isDayHighlighted && historicalData) {
         formatAndSetData(historicalData, series);
@@ -201,6 +206,11 @@ const StockData: FC = () => {
         // If market is open show Real-Time data || if market is closed show default 7 days data
         formatAndSetData(data, series);
       }
+
+      // Fit content after updating data
+      setTimeout(() => {
+        chart?.timeScale().fitContent();
+      }, 50);
 
       // Subscribe to crosshair move to get the hovered candlestick data
       chart?.subscribeCrosshairMove((param) => {
@@ -211,26 +221,24 @@ const StockData: FC = () => {
           setIsHovered(false);
         }
       });
-
-      chart?.timeScale().fitContent();
     }
 
     // Handle Sokcet connect and real time data
     socket.connect();
-    socket.on('marketStatusChange', (marketStatusChange) => {
+    socket.on("marketStatusChange", (marketStatusChange) => {
       refetch();
     });
 
-    if (data?.marketStatus !== null && data?.marketStatus !== 'closed') {
-      socket.emit('selectSymbol', params.symbol);
+    if (data?.marketStatus !== null && data?.marketStatus !== "closed") {
+      socket.emit("selectSymbol", params.symbol);
 
-      socket.on('symbolData', (newData) => {
-        if (newData && newData.type === 'live_feed') {
+      socket.on("symbolData", (newData) => {
+        if (newData && newData.type === "live_feed") {
           // Extracting the dynamic stock key
           const stockKey = Object.keys(newData.feeds || {})[0];
 
           if (!stockKey) {
-            console.log('No valid stock key found');
+            console.log("No valid stock key found");
             return;
           }
 
@@ -240,7 +248,7 @@ const StockData: FC = () => {
 
           if (ohlcData) {
             const filteredData = ohlcData.filter(
-              (item: any) => item.interval === 'I1'
+              (item: any) => item.interval === "I1"
             );
 
             setPrevClose(latestOhlc.close);
@@ -296,6 +304,34 @@ const StockData: FC = () => {
   }, [dataType, marketStatus, dispatch]);
   // *****************************************************************************
 
+  // Ensure chart is reinitialized if the container ref changes
+  useEffect(() => {
+    // Make sure the chart resizes if the window size changes
+    const handleResize = () => {
+      if (chart && chartContainerRef.current) {
+        const container = chartContainerRef.current as HTMLDivElement;
+        const parent = container.parentElement;
+
+        if (parent) {
+          const width = parent.clientWidth;
+          const height = parent.clientHeight;
+
+          chart.resize(width, height);
+          chart.timeScale().fitContent();
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Call once to ensure proper sizing on initial render
+    setTimeout(handleResize, 200);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [chart]);
+
   // Percentage change of current data
   const percentageChangeValue =
     ((latestOhlc.close - prevClose) / prevClose) * 100;
@@ -304,17 +340,17 @@ const StockData: FC = () => {
 
   // Update title based on current values
   useEffect(() => {
-    const prefix = percentageChangeValue > 0 ? '+' : '';
+    const prefix = percentageChangeValue > 0 ? "+" : "";
 
     const newTitle = `${params.market} : ${
       params.symbol
     } (${prefix}${percentageChangeValue.toFixed(2)}%)`;
 
     document.title = newTitle;
-    document.body.style.backgroundColor = 'red !important';
+    document.body.style.backgroundColor = "red !important";
 
     return () => {
-      document.title = 'Stock Trading Platform';
+      document.title = "Stock Trading Platform";
     };
   }, [percentageChangeValue]);
 
@@ -327,285 +363,315 @@ const StockData: FC = () => {
     setIsDayHighlighted(bool);
   };
 
+  // Navigate to insights page
+  const navigateToInsights = () => {
+    router.push(`/insights/${params.market}/${params.symbol}`);
+  };
+
   return (
-    <Grid container sx={{ mt: 8 }}>
-      <Grid item xs={12} sm={8} sx={{ ml: 0.2 }}>
-        <Box className='chartWrapper'>
+    <Grid container sx={{ mt: 8 }} spacing={2}>
+      <Grid item xs={12} md={8}>
+        {/* Chart Navigation Bar */}
+        <Paper
+          sx={{
+            mb: 3,
+            p: 0.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            borderRadius: "8px",
+            backgroundColor: "rgba(21, 25, 36, 0.8)",
+            backdropFilter: "blur(5px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+          }}
+        >
+          <Tooltip title="Chart View">
+            <IconButton
+              color="primary"
+              sx={{ backgroundColor: "rgba(79, 195, 247, 0.1)" }}
+            >
+              <ShowChartIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Insights">
+            <IconButton onClick={navigateToInsights}>
+              <InsightsIcon />
+            </IconButton>
+          </Tooltip>
+        </Paper>
+
+        <Box
+          sx={{
+            width: "100%",
+            height: "80vh",
+            minHeight: "500px",
+            borderRadius: "1rem",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            backgroundColor: "#151924",
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
           <Box
             ref={chartContainerRef}
             sx={{
-              width: '100%',
-              height: '20rem',
-              minHeight: {
-                xs: '60vh',
-                sm: '80vh',
-              },
-              overflow: 'hidden',
-              position: 'relative',
+              width: "100%",
+              height: "100%",
+              position: "absolute",
+              top: 0,
+              left: 0,
+            }}
+          />
+          <Box
+            className="ohlcInfo"
+            display="flex"
+            gap={2}
+            sx={{
+              background: "rgba(21, 25, 36, 0.8)",
+              position: "absolute",
+              top: 10,
+              left: 10,
+              zIndex: 10,
+              p: 1,
+              borderRadius: "0.5rem",
+              backdropFilter: "blur(5px)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
-            <Box
-              className='ohlcInfo'
-              display='flex'
-              gap={2}
-              sx={{
-                background: '#151924',
-                position: 'absolute',
-                top: 10,
-                zIndex: 10,
-                ml: 1,
-              }}
-            >
-              <Typography variant='body2'>
-                Open:{' '}
-                <span style={{ color: isHovered ? hoverColor : color }}>
-                  {isHovered
-                    ? ohlc.open.toFixed(2)
-                    : latestOhlc.open.toFixed(2)}
-                </span>
-              </Typography>
-              <Typography variant='body2'>
-                High:{' '}
-                <span style={{ color: isHovered ? hoverColor : color }}>
-                  {isHovered
-                    ? ohlc.high.toFixed(2)
-                    : latestOhlc.high.toFixed(2)}
-                </span>
-              </Typography>
-              <Typography variant='body2'>
-                Low:{' '}
-                <span style={{ color: isHovered ? hoverColor : color }}>
-                  {isHovered ? ohlc.low.toFixed(2) : latestOhlc.low.toFixed(2)}
-                </span>
-              </Typography>
-              <Typography variant='body2'>
-                Close:{' '}
-                <span style={{ color: isHovered ? hoverColor : color }}>
-                  {isHovered
-                    ? ohlc.close.toFixed(2)
-                    : latestOhlc.close.toFixed(2)}
-                </span>
-              </Typography>
-            </Box>
+            <Typography variant="body2">
+              Open:{" "}
+              <span style={{ color: isHovered ? hoverColor : color }}>
+                {isHovered ? ohlc.open.toFixed(2) : latestOhlc.open.toFixed(2)}
+              </span>
+            </Typography>
+            <Typography variant="body2">
+              High:{" "}
+              <span style={{ color: isHovered ? hoverColor : color }}>
+                {isHovered ? ohlc.high.toFixed(2) : latestOhlc.high.toFixed(2)}
+              </span>
+            </Typography>
+            <Typography variant="body2">
+              Low:{" "}
+              <span style={{ color: isHovered ? hoverColor : color }}>
+                {isHovered ? ohlc.low.toFixed(2) : latestOhlc.low.toFixed(2)}
+              </span>
+            </Typography>
+            <Typography variant="body2">
+              Close:{" "}
+              <span style={{ color: isHovered ? hoverColor : color }}>
+                {isHovered
+                  ? ohlc.close.toFixed(2)
+                  : latestOhlc.close.toFixed(2)}
+              </span>
+            </Typography>
           </Box>
         </Box>
       </Grid>
 
-      <Grid
-        item
-        style={{ flexGrow: 1 }}
-        sx={{
-          mx: 2,
-          my: {
-            xs: 2,
-            sm: 0,
-          },
-          backdropFilter: 'blur(0.5rem)',
-          transition: 'backgroundColor 0.5s',
-          borderRadius: '1rem',
-          height: 'fit-content',
-          order: {
-            xs: 2,
-            sm: 1,
-          },
-        }}
-      >
-        <Grid
-          item
-          sx={{
-            backgroundColor: 'rgb(21, 25, 36, 0.8)',
-            border: '1px solid rgba( 255, 255, 255, 0.10 )',
-            backdropFilter: 'blur(5px)',
-            borderRadius: '1rem',
-            p: 3.5,
-            mb: 2,
-          }}
-        >
-          <Typography
-            variant='h6'
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.05 )',
-              border: '1px solid rgba( 255, 255, 255, 0.10 )',
-              backdropFilter: 'blur(5px)',
-              textAlign: 'center',
-              borderRadius: '1rem',
-              mb: 2,
-              padding: 1,
-              fontFamily: 'inherit',
-            }}
-          >
-            {params.market} : {params.symbol}
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='body2'
+      <Grid item xs={12} md={3.8}>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Grid
+              item
               sx={{
-                background: 'rgba( 255, 255, 255, 0.03 )',
-                border: '1px solid rgba(255, 255, 255, 0.10)',
-                backdropFilter: 'blur(5px)',
-                textAlign: 'center',
-                borderRadius: '1rem',
-                padding: 1,
-                px: 2,
-                fontWeight: '600',
-                fontFamily: 'inherit',
-                fontSize: {
-                  xs: '0.8rem',
-                  sm: '',
-                },
+                backgroundColor: "rgb(21, 25, 36, 0.8)",
+                border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                backdropFilter: "blur(5px)",
+                borderRadius: "1rem",
+                p: 3.5,
+                mb: 2,
               }}
             >
-              Today {new Date().toDateString()}
-            </Typography>
+              <Typography
+                variant="h6"
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.05 )",
+                  border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                  backdropFilter: "blur(5px)",
+                  textAlign: "center",
+                  borderRadius: "1rem",
+                  mb: 2,
+                  padding: 1,
+                  fontFamily: "inherit",
+                }}
+              >
+                {params.market} : {params.symbol}
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    background: "rgba( 255, 255, 255, 0.03 )",
+                    border: "1px solid rgba(255, 255, 255, 0.10)",
+                    backdropFilter: "blur(5px)",
+                    textAlign: "center",
+                    borderRadius: "1rem",
+                    padding: 1,
+                    px: 2,
+                    fontWeight: "600",
+                    fontFamily: "inherit",
+                    fontSize: {
+                      xs: "0.8rem",
+                      sm: "",
+                    },
+                  }}
+                >
+                  Today {new Date().toDateString()}
+                </Typography>
 
-            <Typography
-              variant='body2'
-              component='div'
-              sx={{
-                background: 'rgba( 255, 255, 255, 0.03 )',
-                border: '1px solid rgba(255, 255, 255, 0.10)',
-                backdropFilter: 'blur(5px)',
-                textAlign: 'center',
-                borderRadius: '1rem',
-                padding: 1,
-                px: 2,
-                fontWeight: '600',
-                fontFamily: 'inherit',
-                fontSize: {
-                  xs: '0.8rem',
-                  sm: '',
-                },
-              }}
-            >
-              <LiveTime />
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.03 )',
-              border: '1px solid rgba(255, 255, 255, 0.10)',
-              backdropFilter: 'blur(5px)',
-              borderRadius: '1rem',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Typography
-              sx={{
-                textTransform: 'capitalize',
-                fontFamily: 'inherit',
-                fontWeight: '600',
-                fontSize: {
-                  xs: '0.8rem',
-                  sm: '',
-                },
-              }}
-            >
-              Market
-            </Typography>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{
+                    background: "rgba( 255, 255, 255, 0.03 )",
+                    border: "1px solid rgba(255, 255, 255, 0.10)",
+                    backdropFilter: "blur(5px)",
+                    textAlign: "center",
+                    borderRadius: "1rem",
+                    padding: 1,
+                    px: 2,
+                    fontWeight: "600",
+                    fontFamily: "inherit",
+                    fontSize: {
+                      xs: "0.8rem",
+                      sm: "",
+                    },
+                  }}
+                >
+                  <LiveTime />
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.03 )",
+                  border: "1px solid rgba(255, 255, 255, 0.10)",
+                  backdropFilter: "blur(5px)",
+                  borderRadius: "1rem",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Typography
+                  sx={{
+                    textTransform: "capitalize",
+                    fontFamily: "inherit",
+                    fontWeight: "600",
+                    fontSize: {
+                      xs: "0.8rem",
+                      sm: "",
+                    },
+                  }}
+                >
+                  Market
+                </Typography>
+                <Box
+                  className={marketStatus === "open" ? "blob" : "blob_closed"}
+                ></Box>
+                <Typography
+                  sx={{
+                    textTransform: "capitalize",
+                    fontFamily: "inherit",
+                    fontWeight: "600",
+                    fontSize: {
+                      xs: "0.8rem",
+                      sm: "",
+                    },
+                  }}
+                >
+                  {marketStatus}
+                </Typography>
+              </Box>
+            </Grid>
             <Box
-              className={marketStatus === 'open' ? 'blob' : 'blob_closed'}
-            ></Box>
-            <Typography
               sx={{
-                textTransform: 'capitalize',
-                fontFamily: 'inherit',
-                fontWeight: '600',
-                fontSize: {
-                  xs: '0.8rem',
-                  sm: '',
-                },
+                backgroundColor: "rgb(21, 25, 36, 0.8)",
+                border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                backdropFilter: "blur(5px)",
+                borderRadius: "1rem",
+                p: 3.5,
+                mb: 2,
               }}
             >
-              {marketStatus}
-            </Typography>
-          </Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.03 )",
+                  border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                  textAlign: "left",
+                  borderRadius: "1rem",
+                  my: 2,
+                  padding: 1,
+                  fontWeight: "600",
+                }}
+              >
+                Latest Value: ₹{Number(latestOhlc.close).toFixed(2)}
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.03 )",
+                  border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                  textAlign: "left",
+                  borderRadius: "1rem",
+                  mb: 2,
+                  padding: 1,
+                  fontWeight: "600",
+                }}
+              >
+                Last Value: ₹{Number(prevClose).toFixed(2)}
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.03 )",
+                  border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                  textAlign: "left",
+                  borderRadius: "1rem",
+                  mb: 2,
+                  padding: 1,
+                  fontWeight: "600",
+                }}
+              >
+                Price Change:{" "}
+                <span style={{ color: priceChangeValue < 0 ? RED : GREEN }}>
+                  ₹ {priceChangeValue > 0 ? "+" : ""}
+                  {priceChangeValue.toFixed(2)}
+                </span>
+              </Typography>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  background: "rgba( 255, 255, 255, 0.03 )",
+                  border: "1px solid rgba( 255, 255, 255, 0.10 )",
+                  textAlign: "left",
+                  borderRadius: "1rem",
+                  mb: 2,
+                  padding: 1,
+                  fontWeight: "600",
+                }}
+              >
+                Percentage Change:{" "}
+                <span
+                  style={{ color: percentageChangeValue < 0 ? RED : GREEN }}
+                >
+                  {percentageChangeValue > 0 ? "+" : ""}
+                  {percentageChangeValue.toFixed(2)}%
+                </span>
+              </Typography>
+            </Box>
+          </Grid>
         </Grid>
-        <Box
-          sx={{
-            backgroundColor: 'rgb(21, 25, 36, 0.8)',
-            border: '1px solid rgba( 255, 255, 255, 0.10 )',
-            backdropFilter: 'blur(5px)',
-            borderRadius: '1rem',
-            p: 3.5,
-          }}
-        >
-          <Typography
-            variant='body2'
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.03 )',
-              border: '1px solid rgba( 255, 255, 255, 0.10 )',
-              textAlign: 'left',
-              borderRadius: '1rem',
-              my: 2,
-              padding: 1,
-              fontWeight: '600',
-            }}
-          >
-            Latest Value: ₹{Number(latestOhlc.close).toFixed(2)}
-          </Typography>
-
-          <Typography
-            variant='body2'
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.03 )',
-              border: '1px solid rgba( 255, 255, 255, 0.10 )',
-              textAlign: 'left',
-              borderRadius: '1rem',
-              mb: 2,
-              padding: 1,
-              fontWeight: '600',
-            }}
-          >
-            Last Value: ₹{Number(prevClose).toFixed(2)}
-          </Typography>
-
-          <Typography
-            variant='body2'
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.03 )',
-              border: '1px solid rgba( 255, 255, 255, 0.10 )',
-              textAlign: 'left',
-              borderRadius: '1rem',
-              mb: 2,
-              padding: 1,
-              fontWeight: '600',
-            }}
-          >
-            Price Change:{' '}
-            <span style={{ color: priceChangeValue < 0 ? RED : GREEN }}>
-              ₹ {priceChangeValue > 0 ? '+' : ''}
-              {priceChangeValue.toFixed(2)}
-            </span>
-          </Typography>
-
-          <Typography
-            variant='body2'
-            sx={{
-              background: 'rgba( 255, 255, 255, 0.03 )',
-              border: '1px solid rgba( 255, 255, 255, 0.10 )',
-              textAlign: 'left',
-              borderRadius: '1rem',
-              mb: 2,
-              padding: 1,
-              fontWeight: '600',
-            }}
-          >
-            Percentage Change:{' '}
-            <span style={{ color: percentageChangeValue < 0 ? RED : GREEN }}>
-              {percentageChangeValue > 0 ? '+' : ''}
-              {percentageChangeValue.toFixed(2)}%
-            </span>
-          </Typography>
-        </Box>
       </Grid>
 
       <SelectStockDay
