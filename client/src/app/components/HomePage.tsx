@@ -6,11 +6,15 @@ import { Search } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Container, Box, Typography, Button, Grid, Chip } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
 
 //* ************** Custom imports *************** *//
 import Footer from "./Footer";
 import VideoPlayer from "./VideoPlayer";
 import DefaultStocks from "./DefaultStocks";
+import WithAuth, { WithAuthProps } from "../middleware/WithAuth";
+import { ReduxState } from "@/lib/redux/store";
 // Updated images from Unsplash for modern financial aesthetic
 import IndianFlag from "../../../public/homepage/indian_flag.png";
 
@@ -30,8 +34,10 @@ const REALTIME_IMAGE =
 const HISTORICAL_IMAGE =
   "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop";
 
-const HomePage: FC = () => {
+const HomePage: FC<WithAuthProps> = ({ isAuthenticated }) => {
   const [showStocksList, setShowStocksList] = useState<boolean>(false);
+  const router = useRouter();
+  const { isSignedIn } = useSelector((state: ReduxState) => state.auth);
 
   useEffect(() => {
     if (showStocksList) {
@@ -46,6 +52,10 @@ const HomePage: FC = () => {
   }, [showStocksList]);
 
   const handleStocksList = () => {
+    if (!isAuthenticated && !isSignedIn) {
+      router.push("/signup");
+      return;
+    }
     setShowStocksList((prev) => !prev);
   };
 
@@ -855,4 +865,4 @@ const HomePage: FC = () => {
   );
 };
 
-export default HomePage as FC;
+export default WithAuth(HomePage, true);

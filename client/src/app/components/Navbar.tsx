@@ -1,7 +1,7 @@
-'use client';
-import React, { useState, useEffect, FC } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+"use client";
+import React, { useState, useEffect, FC } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   AppBar,
   Box,
@@ -13,13 +13,13 @@ import {
   Avatar,
   Tooltip,
   MenuItem,
-} from '@mui/material';
-import { Person, CandlestickChart } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLogoutMutation } from '@/lib/redux/api/profileApi';
-import { signout } from '@/lib/redux/slices/authSlice';
+} from "@mui/material";
+import { Person, CandlestickChart } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { useLogoutMutation } from "@/lib/redux/api/profileApi";
+import { signout } from "@/lib/redux/slices/authSlice";
 
-const settings = ['Sign out'];
+const settings = ["Sign out"];
 
 const Navbar: FC = () => {
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
@@ -41,11 +41,11 @@ const Navbar: FC = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     // Cleanup listener on component unmount
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -60,75 +60,75 @@ const Navbar: FC = () => {
 
   // Handle user logout
   const userLogout = async () => {
-    const resLogout = await logout('');
+    const resLogout = await logout("");
     dispatch(signout(resLogout));
   };
 
   return (
     <AppBar
-      position='fixed'
+      position="fixed"
       sx={{
-        backdropFilter: isScrolled ? 'blur(20px)' : 'none',
-        backgroundColor: isScrolled ? 'rgba(0, 0, 0, 0.3)' : 'transparent',
-        width: '100vw',
-        boxShadow: 'none',
-        transition: 'backgroundColor 0.5s',
+        backdropFilter: isScrolled ? "blur(20px)" : "none",
+        backgroundColor: isScrolled ? "rgba(0, 0, 0, 0.3)" : "transparent",
+        width: "100vw",
+        boxShadow: "none",
+        transition: "backgroundColor 0.5s",
         zIndex: 10,
       }}
     >
-      <Container maxWidth='xl'>
+      <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Box
             sx={{
-              display: 'flex',
+              display: "flex",
               flexGrow: 1,
-              justifyContent: 'space-between',
+              justifyContent: "space-between",
             }}
           >
             {/* Left items */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               <CandlestickChart
                 sx={{
                   height: {
-                    xs: '2rem',
-                    sm: '2.5rem',
+                    xs: "2rem",
+                    sm: "2.5rem",
                   },
-                  width: '2.5rem',
+                  width: "2.5rem",
                 }}
               />
               <Link
-                href={'/'}
+                href={"/"}
                 style={{
-                  color: 'white',
-                  marginRight: '2rem',
+                  color: "white",
+                  marginRight: "2rem",
                   fontWeight: 700,
-                  letterSpacing: '.1rem',
+                  letterSpacing: ".1rem",
                 }}
               >
                 <Typography
                   sx={{
-                    fontWeight: '600',
+                    fontWeight: "600",
                     fontSize: {
-                      xs: '0.8rem',
-                      sm: '0.9rem',
-                      md: '',
+                      xs: "0.8rem",
+                      sm: "0.9rem",
+                      md: "",
                     },
                   }}
                 >
-                  TRADING VIEW
+                  FINBUD
                 </Typography>
               </Link>
             </Box>
 
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
               {!isSignedIn &&
-                pathname !== '/signin' &&
-                pathname !== '/signup' && (
+                pathname !== "/signin" &&
+                pathname !== "/signup" && (
                   <>
-                    <Link href={'/signin'} className='nav_link'>
+                    <Link href={"/signin"} className="nav_link">
                       SignIn
                     </Link>
-                    <Link href={'/signup'} className='nav_link'>
+                    <Link href={"/signup"} className="nav_link">
                       SignUp
                     </Link>
                   </>
@@ -136,37 +136,37 @@ const Navbar: FC = () => {
 
               {isSignedIn && (
                 <Box sx={{ flexGrow: 0 }}>
-                  <Tooltip title='Open settings'>
+                  <Tooltip title="Open settings">
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <Avatar sx={{ background: 'transparent' }}>
+                      <Avatar sx={{ background: "transparent" }}>
                         <Person
                           sx={{
-                            color: 'white',
+                            color: "white",
                           }}
                         />
                       </Avatar>
                     </IconButton>
                   </Tooltip>
                   <Menu
-                    sx={{ mt: '45px' }}
-                    id='menu-appbar'
+                    sx={{ mt: "45px" }}
+                    id="menu-appbar"
                     anchorEl={anchorElUser}
                     anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
+                      vertical: "top",
+                      horizontal: "right",
                     }}
                     disableScrollLock={true}
                     keepMounted
                     transformOrigin={{
-                      vertical: 'top',
-                      horizontal: 'right',
+                      vertical: "top",
+                      horizontal: "right",
                     }}
                     open={Boolean(anchorElUser)}
                     onClose={handleCloseUserMenu}
                   >
                     {settings.map((setting) => (
                       <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                        <Typography textAlign='center'>{setting}</Typography>
+                        <Typography textAlign="center">{setting}</Typography>
                       </MenuItem>
                     ))}
                   </Menu>

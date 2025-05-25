@@ -6,14 +6,14 @@ import json
 
 def setup_page():
     st.set_page_config(
-        page_title="⚡ Stock Trading Assistant",
+        page_title="⚡ FinBud Assistant",
         layout="centered"
     )
     
     # Create a header with a reset button
     col1, col2 = st.columns([4, 1])
     with col1:
-        st.header("STOCK TRADING PLATFORM ASSISTANT")
+        st.header("FINBUD ASSISTANT")
     with col2:
         if st.button("New Chat", type="primary"):
             # Clear session state and force rerun
@@ -31,7 +31,7 @@ def setup_page():
 def get_stock_platform_context():
     """Provides context about the stock trading platform features for the chatbot."""
     return """
-    You are a financial advisor chatbot specialized in the Stock Trading Platform. Use this context to help users:
+    You are a financial advisor chatbot specialized in the FinBud platform. Use this context to help users:
     
     STOCK CHART FEATURES:
     - Real-time stock data for open markets displayed as candlestick charts

@@ -1,4 +1,4 @@
-# Real-Time Stock Trading Platform
+# FinBud - Real-Time Financial Platform
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-- Developed a user-friendly Stock Trading Platform with **Next.js** and included **Google Login** for simpler user access.
+- Developed a user-friendly FinBud platform with **Next.js** and included **Google Login** for simpler user access.
 
 - A backend using **Node.js**, **Socket.io**, **Redis**, and **MongoDB** that receives Real-Time stock data from the NSE India.
 
@@ -57,6 +57,51 @@ or
 yarn
 ```
 
+### Set Up Environment Variables
+
+The project requires some environment variables to function properly. Create the following files:
+
+#### Client Environment (.env.local in client directory)
+
+```
+NEXT_PUBLIC_BACKEND_URL = 'http://localhost:5001'
+NEXT_PUBLIC_GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'
+NEXT_PUBLIC_GOOGLE_REDIRECT_URI = 'http://localhost:5001/api/sessions/oauth/google'
+GOOGLE_API_KEY = 'YOUR_GOOGLE_GEMINI_API_KEY'
+```
+
+#### Server Environment (.env in server directory)
+
+```
+DB = 'YOUR_MONGODB_CONNECTION_STRING'
+PORT = 5001
+PRIVATE_KEY = 'YOUR_JWT_SECRET_KEY'
+CLIENT_DOMAIN = 'http://localhost:3000'
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'
+GOOGLE_CLIENT_SECRET = 'YOUR_GOOGLE_CLIENT_SECRET'
+GOOGLE_OAUTH_REDIRECT_URL = 'http://localhost:5001/api/sessions/oauth/google'
+```
+
+### Set Up Google OAuth (Required for Authentication)
+
+To enable Google authentication, you need to set up OAuth credentials:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" > "OAuth client ID"
+5. Select "Web application" as the application type
+6. Add a name for your OAuth client
+7. Add the following Authorized redirect URIs:
+   - `http://localhost:5001/api/sessions/oauth/google`
+8. Click "Create"
+9. Copy the Client ID and Client Secret
+10. Add these values to your environment files:
+    - Client ID goes in both client and server .env files
+    - Client Secret goes in the server .env file only
+
 ### Start the Development Server
 
 Finally, start the development server with this command:
@@ -73,7 +118,7 @@ yarn dev
 
 - The client side runs at `http://localhost:3000` or a different port if `3000` is already in use.
 
-- The server side runs at `http://localhost:5000` or a different port if `5000` is already in use.
+- The server side runs at `http://localhost:5001` or a different port if `5001` is already in use.
 
 ---
 

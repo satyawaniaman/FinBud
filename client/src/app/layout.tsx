@@ -10,12 +10,12 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Stock Trading Platform",
-  description: "Real Time Stock Trading Platform",
+  title: "FinBud",
+  description: "Real Time Financial Buddy Platform",
   openGraph: {
     authors: "Mujib Sayyad",
-    title: "Stock Trading Platform",
-    description: "Indian NSE Stock Trading Platform",
+    title: "FinBud",
+    description: "Indian NSE Financial Buddy Platform",
     url: "https://stock-platform.vercel.app",
     images: [
       {

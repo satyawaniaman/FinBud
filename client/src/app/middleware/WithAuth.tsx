@@ -1,13 +1,13 @@
-'use client';
-import { useState, useEffect, FC } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useSelector, useDispatch } from 'react-redux';
+"use client";
+import { useState, useEffect, FC } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useSelector, useDispatch } from "react-redux";
 
 //* ************** Custom imports *************** *//
-import { socket } from './socket';
-import { getReq } from '../hooks/axiosapi';
-import { validateUser } from '@/lib/redux/slices/authSlice';
-import Loader from '../components/Loader';
+import { socket } from "./socket";
+import { getReq } from "../hooks/axiosapi";
+import { validateUser } from "@/lib/redux/slices/authSlice";
+import Loader from "../components/Loader";
 
 //* ************** interface *************** *//
 export interface WithAuthProps {
@@ -22,7 +22,7 @@ const WithAuth = (
   const Inner: FC<WithAuthProps> = (props: WithAuthProps) => {
     const router = useRouter();
     const pathname = usePathname();
-    const [loading, setLoading] = useState(pathname.startsWith('/chart/'));
+    const [loading, setLoading] = useState(pathname.startsWith("/chart/"));
 
     const { isSignedIn, status } = useSelector((state: any) => state.auth);
     // console.log('🚀 isSignedIn:', isSignedIn);
@@ -33,13 +33,24 @@ const WithAuth = (
       getReq().then((data) => {
         dispatch(validateUser(data));
         setLoading(false);
+
+        // If this is a protected route and user is not authenticated, redirect to sign in
+        if (
+          !isPublicPage &&
+          !data.isSignedIn &&
+          !pathname.startsWith("/signin") &&
+          !pathname.startsWith("/signup")
+        ) {
+          router.push("/signin");
+        }
+        // Remove automatic redirection after authentication
       });
 
       // Clean up by disconnecting the socket when the component unmounts
       return () => {
         socket.disconnect();
       };
-    }, [dispatch, isPublicPage, isSignedIn, router]);
+    }, [dispatch, isPublicPage, pathname, router]);
 
     if (loading) {
       return <Loader />;

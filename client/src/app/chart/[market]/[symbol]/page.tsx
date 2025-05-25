@@ -28,6 +28,7 @@ import { socket } from "@/app/middleware/socket";
 import { ReduxDispatch, ReduxState } from "@/lib/redux/store";
 import { setMarketStatus, setDataType } from "@/lib/redux/slices/stockSlice";
 import SelectStockDay from "./SelectStockDay";
+import WithAuth, { WithAuthProps } from "@/app/middleware/WithAuth";
 import {
   useGetStockDataQuery,
   useLazyGetOnSelecteStockDataQuery,
@@ -44,7 +45,7 @@ import {
 } from "./ChartPage";
 
 //* ************************ ************************ *//
-const StockData: FC = () => {
+const StockData: FC<WithAuthProps> = ({ isAuthenticated }) => {
   const [chart, setChart] = useState<IChartApi | null>(null);
   const [series, setSeries] = useState<ISeriesApi<"Candlestick"> | null>(null);
   const [color, setColor] = useState<string>(DEFAULT_COLOR);
@@ -60,6 +61,15 @@ const StockData: FC = () => {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
+
+  const { isSignedIn } = useSelector((state: ReduxState) => state.auth);
+
+  useEffect(() => {
+    // Redirect to signin if not authenticated
+    if (!isAuthenticated && !isSignedIn) {
+      router.push("/signin");
+    }
+  }, [isAuthenticated, isSignedIn, router]);
 
   // Search stock by url params (rtk api)
   const { data, refetch } = useGetStockDataQuery(params);
@@ -352,7 +362,7 @@ const StockData: FC = () => {
     document.body.style.backgroundColor = "red !important";
 
     return () => {
-      document.title = "Stock Trading Platform";
+      document.title = "FinBud";
     };
   }, [percentageChangeValue]);
 
@@ -788,4 +798,4 @@ const StockData: FC = () => {
   );
 };
 
-export default StockData as FC;
+export default WithAuth(StockData, false);

@@ -1,5 +1,5 @@
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
+import qs from "qs";
 
 interface GoogleOAuthTokenParams {
   code: string;
@@ -11,26 +11,26 @@ interface GoogleUserParams {
 }
 
 export const getGoogleOAuthToken = async ({ code }: GoogleOAuthTokenParams) => {
-  const url = 'https://oauth2.googleapis.com/token';
+  const url = "https://oauth2.googleapis.com/token";
 
   const values = {
     code,
     client_id: process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-    grant_type: 'authorization_code',
+    redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL,
+    grant_type: "authorization_code",
   };
 
   try {
     const res = await axios.post(url, qs.stringify(values), {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
     });
 
     return res.data;
   } catch (error) {
-    console.log('🚀 getGoogleOAuthToken.catch.error', error);
+    console.log("🚀 getGoogleOAuthToken.catch.error", error);
     return { error: error };
   }
 };
@@ -51,7 +51,7 @@ export const getGoogleUser = async ({
 
     return res.data;
   } catch (error) {
-    console.log('🚀 getGoogleUser.catch.error', error);
+    console.log("🚀 getGoogleUser.catch.error", error);
     return { error: error };
   }
 };
