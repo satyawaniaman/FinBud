@@ -1,4 +1,4 @@
-# FinBud - Real-Time Financial Platform
+# FinBud - Real-Time Stock Tracking & Financial Platform
 
 ## Tech Stack
 
@@ -11,9 +11,22 @@
 
 - Developed a user-friendly FinBud platform with **Next.js** and included **Google Login** for simpler user access.
 
-- A backend using **Node.js**, **Socket.io**, **Redis**, and **MongoDB** that receives Real-Time stock data from the NSE India.
+- A backend using **Node.js**, **Socket.io**, **Redis**, and **MongoDB** that receives Real-Time stock data from NSE India.
 
 - Access **Real-Time** and **Historical** data for NSE India, along with **Market Status** and the ability to Search for NSE stocks.
+
+- **AI-powered** financial assistant using Google Gemini API to help users understand market trends and make informed decisions.
+
+## Key Features
+
+- **Real-time Stock Tracking:** Get live stock data from NSE India with automatic updates.
+- **Historical Data Analysis:** View and analyze historical stock data for the past 7, 10, 20, or 30 days.
+- **Candlestick Charting:** Interactive charts displaying OHLC (Open, High, Low, Close) data.
+- **Market Status Indicator:** Know instantly whether markets are open or closed.
+- **Stock Search:** Find stocks easily with our powerful search functionality.
+- **Google Authentication:** Secure login and registration using Google OAuth.
+- **FinBud Assistant:** AI-powered chatbot for financial advice and market insights.
+- **Responsive Design:** Optimized user experience across all devices.
 
 ## Project Setup
 
@@ -101,6 +114,14 @@ To enable Google authentication, you need to set up OAuth credentials:
 10. Add these values to your environment files:
     - Client ID goes in both client and server .env files
     - Client Secret goes in the server .env file only
+
+### Set Up Gemini API (For FinBud Assistant)
+
+To enable the AI-powered financial assistant:
+
+1. Go to the [Google AI Studio](https://ai.google.dev/)
+2. Create an API key for Gemini
+3. Add the API key to your client's .env.local file as GOOGLE_API_KEY
 
 ### Start the Development Server
 
@@ -209,13 +230,14 @@ erDiagram
 - **Backend:**
   - `auth.ts`, `stocks.ts`, `ping.ts` (controllers)
   - `userSchema.ts` (Mongoose user model)
-  - `MarketDataFeed.proto` (NSE data structure)
+  - `fetchStockData.ts` (NSE data processing)
 
-## 🤖 Chatbot
+## 🤖 FinBud Assistant
 
 - Streamlit app (`chatbot.py`)
 - Integrates with Google Gemini API for financial Q&A
 - Supports PDF, image, audio, video chat
+- Provides personalized insights based on viewed stocks
 
 ---
 
